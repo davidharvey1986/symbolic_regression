@@ -21,12 +21,12 @@ mass_concentration = function required by NFW
 
 '''
 
-def example_generate_samples_2D(
-    radius = np.logspace( 0, 4, 10000)*units.kpc,
-    nsamples=1000, 
-    halo_mass=10**15*units.Msun,
-    cluster_redshift=0.25,
-    add_scatter=False
+def NFW_projected(
+        radius = np.logspace( 0, 4, 10000)*units.kpc,
+        nsamples=1000, 
+        halo_mass=10**15*units.Msun,
+        cluster_redshift=0.25,
+        add_scatter=False
     ):
     
 
@@ -34,11 +34,13 @@ def example_generate_samples_2D(
         halo_mass, h=0.7, add_scatter=add_scatter 
     )
     
+    omega_m = Planck18.Om(cluster_redshift)
+    
     Sigma_nfw = deltasigma.Sigma_nfw_at_R(
         radius.to(units.Mpc),
         halo_mass.value, 
         concentration, 
-        Planck18.Om0
+        omega_m
     )
     
     return radius, Sigma_nfw
@@ -46,7 +48,8 @@ def example_generate_samples_2D(
 def example_generate_samples( 
     nsamples=1000, 
     halo_mass=10**15*units.Msun,
-    cluster_redshift=0.25
+    cluster_redshift=0.25,
+    projected=False,
     ):
     
     
@@ -54,12 +57,21 @@ def example_generate_samples(
     radius = []
     for i in range( nsamples ):
         
-        this_radius, density = NFW(
-            halo_mass,
-            cluster_redshift=cluster_redshift,
-            add_scatter=True,
-            return_values=True
-        )
+        if not projected:
+            this_radius, density = NFW(
+                halo_mass,
+                cluster_redshift=cluster_redshift,
+                add_scatter=True,
+                return_values=True
+            )
+        else:
+            NFW_projected(
+                radius = np.logspace( 0, 4, 10000)*units.kpc,
+                nsamples=1000, 
+                halo_mass=10**15*units.Msun,
+                cluster_redshift=0.25,
+                add_scatter=False
+                )
         radius.append( np.log10(this_radius) )
         profiles.append( np.log10(density) )
     
